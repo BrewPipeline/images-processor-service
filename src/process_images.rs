@@ -262,7 +262,7 @@ fn download_and_process_image(image_type: &ImageType, base64_url: &String) -> Pr
     match image_type.file_format() {
         image::ImageFormat::WebP => {
             let webp_data = webp::Encoder::from_image(&image)?
-                .encode_simple(false, 100f32)
+                .encode_simple(image_type.lossless(), image_type.quality() as f32)
                 .map_err(|e| format!("simple encode error: {:?}", e))?;
             let mut output_file = fs::File::create(&temp_path)?;
             output_file.write_all(&webp_data)?;
