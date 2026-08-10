@@ -53,7 +53,7 @@ pub const THUMBNAIL_MEDIUM_WIDTH: u32 = parse_u32(env!("THUMBNAIL_MEDIUM_WIDTH")
 // 3
 pub const THUMBNAIL_HEIGHT_MULTIPLIER: u32 = parse_u32(env!("THUMBNAIL_HEIGHT_MULTIPLIER"));
 
-// 100
+// 80
 pub const THUMBNAIL_QUALITY: u32 = parse_u32(env!("THUMBNAIL_QUALITY"));
 
 // false
