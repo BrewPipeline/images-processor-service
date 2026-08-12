@@ -53,6 +53,7 @@ map $host $cors_origin {
 
 server {
     listen 0.0.0.0:${PORT};
+    listen [::]:${PORT};
 
     root /images;
 
