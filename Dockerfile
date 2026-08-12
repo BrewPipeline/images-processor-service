@@ -40,11 +40,31 @@ COPY --from=builder /app/target/release/images-processor-service .
 
 COPY <<'EOF' /etc/nginx/conf.d/default.conf.template
 
-set_real_ip_from 0.0.0.0/0;
+set_real_ip_from 127.0.0.0/8;
+set_real_ip_from 10.0.0.0/8;
+set_real_ip_from 172.16.0.0/12;
+set_real_ip_from 192.168.0.0/16;
+set_real_ip_from ::1/128;
+set_real_ip_from fc00::/7;
 real_ip_header CF-Connecting-IP;
 real_ip_recursive on;
 
-limit_req_zone $binary_remote_addr zone=images:10m rate=200r/m;
+geo $realip_remote_addr $from_private {
+    default        0;
+    127.0.0.0/8    1;
+    10.0.0.0/8     1;
+    172.16.0.0/12  1;
+    192.168.0.0/16 1;
+    ::1/128        1;
+    fc00::/7       1;
+}
+
+map "$from_private:$http_cf_connecting_ip" $limit_key {
+    "1:"    "";
+    default $binary_remote_addr;
+}
+
+limit_req_zone $limit_key zone=images:10m rate=200r/m;
 
 map $host $cors_origin {
     ~^images\.(.+)$ "https://$1";
