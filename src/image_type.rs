@@ -15,6 +15,22 @@ pub enum ImageType {
 }
 
 impl ImageType {
+    pub const fn small() -> Self {
+        ImageType::Thumbnail {
+            nwidth: THUMBNAIL_SMALL_WIDTH,
+            nheight: THUMBNAIL_SMALL_WIDTH * THUMBNAIL_HEIGHT_MULTIPLIER,
+            quality: THUMBNAIL_QUALITY,
+            lossless: THUMBNAIL_LOSSLESS,
+        }
+    }
+    pub const fn medium() -> Self {
+        ImageType::Thumbnail {
+            nwidth: THUMBNAIL_MEDIUM_WIDTH,
+            nheight: THUMBNAIL_MEDIUM_WIDTH * THUMBNAIL_HEIGHT_MULTIPLIER,
+            quality: THUMBNAIL_QUALITY,
+            lossless: THUMBNAIL_LOSSLESS,
+        }
+    }
     pub fn name(&self, name: &String) -> String {
         format!("{name}_{self}")
     }

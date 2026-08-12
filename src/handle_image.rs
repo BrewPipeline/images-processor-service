@@ -17,15 +17,16 @@ pub async fn handle_image(
 
     let result = if !Path::new(&image_type.local_path(&base64_url)).exists() {
         tokio::task::spawn_blocking(move || {
+            let key = image_type.name(&base64_url);
             let res_rx = {
-                let maybe_rx = in_progress_storage.lock().unwrap_or_else(|e| e.into_inner()).get(&base64_url).cloned();
+                let maybe_rx = in_progress_storage.lock().unwrap_or_else(|e| e.into_inner()).get(&key).cloned();
                 if let Some(res_rx) = maybe_rx {
                     res_rx
                 } else {
                     let (res_tx, res_rx) = flume::bounded(1);
-                    in_progress_storage.lock().unwrap_or_else(|e| e.into_inner()).insert(base64_url.clone(), res_rx.clone());
+                    in_progress_storage.lock().unwrap_or_else(|e| e.into_inner()).insert(key.clone(), res_rx.clone());
                     if tx.send((image_type, base64_url.clone(), res_tx)).is_err() {
-                        in_progress_storage.lock().unwrap_or_else(|e| e.into_inner()).remove(&base64_url);
+                        in_progress_storage.lock().unwrap_or_else(|e| e.into_inner()).remove(&key);
                         return Err(Box::from("worker thread is dead"));
                     }
                     res_rx
@@ -41,7 +42,7 @@ pub async fn handle_image(
                     }
                 }
             };
-            in_progress_storage.lock().unwrap_or_else(|e| e.into_inner()).remove(&base64_url);
+            in_progress_storage.lock().unwrap_or_else(|e| e.into_inner()).remove(&key);
             result
         })
         .await

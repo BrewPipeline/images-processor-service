@@ -1,3 +1,4 @@
+mod cached_images;
 mod handle_image;
 mod image_type;
 mod process_images;
@@ -11,6 +12,7 @@ static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 pub static malloc_conf: &[u8] =
     b"background_thread:true,dirty_decay_ms:1000,muzzy_decay_ms:0,narenas:1\0";
 
+pub use crate::cached_images::*;
 pub use crate::handle_image::*;
 pub use crate::image_type::*;
 pub use crate::process_images::*;
@@ -92,18 +94,7 @@ pub async fn handle_small_thumbnail_image(
     if !verify_signature(&base64_url, &query.sig) {
         return HttpResponse::Forbidden().finish();
     }
-    handle_image(
-        ImageType::Thumbnail {
-            nwidth: THUMBNAIL_SMALL_WIDTH,
-            nheight: THUMBNAIL_SMALL_WIDTH * THUMBNAIL_HEIGHT_MULTIPLIER,
-            quality: THUMBNAIL_QUALITY,
-            lossless: THUMBNAIL_LOSSLESS,
-        },
-        base64_url,
-        tx,
-        in_progress_storage,
-    )
-    .await
+    handle_image(ImageType::small(), base64_url, tx, in_progress_storage).await
 }
 
 #[get("/medium/{base64_url}")]
@@ -116,18 +107,7 @@ pub async fn handle_medium_thumbnail_image(
     if !verify_signature(&base64_url, &query.sig) {
         return HttpResponse::Forbidden().finish();
     }
-    handle_image(
-        ImageType::Thumbnail {
-            nwidth: THUMBNAIL_MEDIUM_WIDTH,
-            nheight: THUMBNAIL_MEDIUM_WIDTH * THUMBNAIL_HEIGHT_MULTIPLIER,
-            quality: THUMBNAIL_QUALITY,
-            lossless: THUMBNAIL_LOSSLESS,
-        },
-        base64_url,
-        tx,
-        in_progress_storage,
-    )
-    .await
+    handle_image(ImageType::medium(), base64_url, tx, in_progress_storage).await
 }
 
 #[get("/{base64_url}")]
@@ -158,6 +138,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(tx.clone()))
             .app_data(in_progress_storage.clone())
+            .service(handle_cached_images)
             .service(handle_small_thumbnail_image)
             .service(handle_medium_thumbnail_image)
             .service(handle_normal_image)
